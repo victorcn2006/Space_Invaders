@@ -3,137 +3,214 @@ window.onload = function () {
     startGame();
 };
 
-// Obtenemos el canvas por id y lo guardamos en una constante ya que esta no se moverá
+// Obtenemos el canvas por id y guardamos el contexto 2D
 const canvas = document.getElementById('canvas');
-//Guardamos el contexto 2D en la variable constante ctx
 const ctx = canvas.getContext('2d');
 
-// Configuración del canvas con las medidas de pantalla completa
+// Configuración del canvas a pantalla completa
 const CANVAS_WIDTH = canvas.width = window.innerWidth;
 const CANVAS_HEIGHT = canvas.height = window.innerHeight;
 
-// ANIMACIONES DE ENEMIGOS
-/**
- * 1.Generamos un objeto con el Image, posteriormente guardamos en el objeto la imagen del spritesheet
- * 2.Creamos dos variables constantes de la medida del ancho y alto del sprite sheet
- * 3.Ancho(width) = px totales de ancho / num de sprites por fila 
- * 4.Alto(height) = px totales de alto / num de sprites por columna
- */
+// ---------------------- CARGA DE SPRITES ----------------------
 
-/*SQUID*/
+// Enemigos
 const squidImage = new Image();
 squidImage.src = "../Assets/Sprites_Enemigos/spritesheetSquid.png";
-const spriteWidth = 123;
-const spriteHeight = 102;
-/*CRAB*/
+const spriteWidth = 123;  // Tamaño original
+const spriteHeight = 102; // Tamaño original
+
 const crabImage = new Image();
 crabImage.src = "../Assets/Sprites_Enemigos/spritesheetCrab.png";
-const crabWidth = 116.5;
-const crabHeight = 102;
-/*OCTOPUS*/
+const crabWidth = 116.5;    // Tamaño original
+const crabHeight = 102;   // Tamaño original
+
 const octopus = new Image();
 octopus.src = "../Assets/Sprites_Enemigos/spritesheetOctopus.png";
-const octopusWidth = 131;
-const octopusHeight = 102;
-/*UFO*/
+const octopusWidth = 131; // Tamaño original
+const octopusHeight = 102; // Tamaño original
+
 const UFO = new Image();
 UFO.src = "../Assets/Sprites_Enemigos/UFO.png";
-const UFOWidth = 188;
-const UFOHeight = 102;
+const UFOWidth = 188;   // Tamaño original
+const UFOHeight = 102;  // Tamaño original
 
-/*Sprites Players*/
+// Jugadores
 const PlayerImage1 = new Image();
-PlayerImage1.src="../Assets/Player1.png";
+PlayerImage1.src = "../Assets/Player1.png";
 const PlayerImage2 = new Image();
-PlayerImage2.src="../Assets/Player2.png";
+PlayerImage2.src = "../Assets/Player2.png";
 
-// Creacion de la cuadrícula con los 100 enemigos
+// ---------------------- VARIABLES GLOBALES ----------------------
+
 const enemyColumns = 8;
 const enemyRows = 10;
 const enemySpacing = 20;
-/*Donde empiezan los enemigos, 50x y 50y es la esquina superior izquierda pero con un poco de margen tanto arriba como a los lados*/
 let enemyX = 50;
 let enemyY = 80;
-//Velocidad de todos los enemigos
 let enemySpeed = 1;
-//1 de derecha a izquierda, -1 de izquierda a derecha
 let direction = 1;
 
-let gameFrame = 0;
-/*Se cambia la animacion cada 20 fotogramas*/
-const staggerFrames = 20;
-/*Sirve para poder alternar entre animaciones ya que es como un array la posicion del sprite, 0 es el primer sprite, 1 el siguiente, 
-luego si tuviesemos más columnas con el frameY podriamos escoger la columna, pero cada spritesheet solo tiene 1 columna, por eso no existe*/
-let frameX = 0;
-
-//Posicion en el canvas al iniciarse
 let ufoX = 0;
-let ufoY = 10; 
-//Velocidad del UFO
+let ufoY = 10;
 let ufoSpeed = 3;
 let ufoDirection = 1;
 
-// Movimiento de enemigos
-function moveEnemies() {
-    //la posicion en X es la posicion Inicial del sprite+ la velocidad de los enemigos * direction que es 1 izquierda a derecha
-    enemyX += enemySpeed * direction;
+let gameFrame = 0;
+const staggerFrames = 20;
+let frameX = 0;
 
-    /*Esta confición hace que si la posición de más a la derecha es más grande que el ancho del canvas cambia la dirección de los enemigos*/
+let player1, player2;
+let bulletsPlayer1 = [];
+let bulletsPlayer2 = [];
+let lastShotPlayer1 = 0;
+let lastShotPlayer2 = 0;
+const shootCooldown = 500;
+
+// Enemigos vivos
+let enemies = [];
+
+// ---------------------- FUNCIONES DE ENEMIGOS ----------------------
+
+// Inicializar enemigos en una matriz
+function createEnemies() {
+    enemies = [];
+    for (let row = 0; row < enemyRows; row++) {
+        for (let col = 0; col < enemyColumns; col++) {
+            let type, width, height;
+
+            if (row === 0) {
+                type = 'squid';
+                width = spriteWidth / 2;  // Reducido a la mitad
+                height = spriteHeight / 2; // Reducido a la mitad
+            } else if (row === 1 || row === 2) {
+                type = 'crab';
+                width = crabWidth / 2;    // Reducido a la mitad
+                height = crabHeight / 2;   // Reducido a la mitad
+            } else if (row === 3 || row === 4) {
+                type = 'octopus';
+                width = octopusWidth / 2; // Reducido a la mitad
+                height = octopusHeight / 2; // Reducido a la mitad
+            } else {
+                type = 'octopus';
+                width = octopusWidth / 2; // Reducido a la mitad
+                height = octopusHeight / 2; // Reducido a la mitad
+            }
+
+            enemies.push({ row, col, type, width, height, alive: true });
+        }
+    }
+}
+
+// Movimiento de enemigos y UFO
+function moveEnemies() {
+    enemyX += enemySpeed * direction;
     if (enemyX + (enemyColumns * (spriteWidth + enemySpacing)) > CANVAS_WIDTH || enemyX < 0) {
         direction *= -1;
     }
 
-    //la posicion en X es la posicion Inicial del sprite+ la velocidad de los enemigos * direction que es 1 izquierda a derecha
     ufoX += ufoSpeed * ufoDirection;
-    /*Esta confición hace que si la suma del ancho del UFO más la posicion de la x del UFO es más grande que el canvas cambie la dirección*/
     if (ufoX + UFOWidth > CANVAS_WIDTH || ufoX < 0) {
-        ufoDirection *= -1; // Cambia de dirección
+        ufoDirection *= -1;
     }
 
-    // Control de frames de animación
     if (gameFrame % staggerFrames === 0) {
-        frameX = (frameX + 1) % 2; // Alterna entre 0 y 1 para animación
+        frameX = (frameX + 1) % 2;
     }
 }
 
-
-// Dibujar los enemigos en la cuadrícula con animación
+// Dibujar enemigos vivos y UFO
 function drawEnemyGrid() {
-    for (let row = 0; row < enemyRows; row++) {
-        for (let col = 0; col < enemyColumns; col++) {
-            
-            let x = enemyX + col * (spriteWidth + enemySpacing);
-            let y = enemyY + row * (spriteHeight + enemySpacing);
+    enemies.forEach(enemy => {
+        if (!enemy.alive) return;
 
-            if (row === 0) {
-                ctx.drawImage(squidImage, frameX * spriteWidth, 0, spriteWidth, spriteHeight, x, y, spriteWidth, spriteHeight);
-            } else if (row === 1 || row === 2) {
-                ctx.drawImage(crabImage, frameX * crabWidth, 0, crabWidth, crabHeight, x, y, crabWidth, crabHeight);
-            } else if (row === 3 || row === 4) {
-                ctx.drawImage(octopus, frameX * octopusWidth, 0, octopusWidth, octopusHeight, x, y, octopusWidth, octopusHeight);
-            }
+        let x = enemyX + enemy.col * (enemy.width + enemySpacing);
+        let y = enemyY + enemy.row * (enemy.height + enemySpacing);
+
+        if (enemy.type === 'squid') {
+            ctx.drawImage(squidImage, frameX * spriteWidth, 0, spriteWidth, spriteHeight, x, y, enemy.width, enemy.height);
+        } else if (enemy.type === 'crab') {
+            ctx.drawImage(crabImage, frameX * crabWidth, 0, crabWidth, crabHeight, x, y, enemy.width, enemy.height);
+        } else if (enemy.type === 'octopus') {
+            ctx.drawImage(octopus, frameX * octopusWidth, 0, octopusWidth, octopusHeight, x, y, enemy.width, enemy.height);
         }
-    }
-    // Dibujar UFO en su nueva posición
+    });
+
     ctx.drawImage(UFO, 0, 0, UFOWidth, UFOHeight, ufoX, ufoY, UFOWidth, UFOHeight);
 }
 
-// Variables para jugadores y disparos
-var player1, player2;
-var bulletsPlayer1 = [];
-var bulletsPlayer2 = [];
-var lastShotPlayer1 = 0;
-var lastShotPlayer2 = 0;
-const shootCooldown = 500;
+// ---------------------- JUGADORES ----------------------
 
-// Inicializar el juego
-function startGame() {
-    myGameArea.start();
-    player1 = new component(30, 30, "red", 10, canvas.height - 70, PlayerImage1);
-    player2 = new component(30, 30, "blue", 100, canvas.height - 70, PlayerImage2);
+function component(width, height, color, x, y, PlayerImage) {
+    this.width = width;
+    this.height = height;
+    this.speed = 3;
+    this.x = x;
+    this.y = y;
+    this.image = PlayerImage;
+
+    this.update = function () {
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+    };
+
+    this.newPos = function (leftKey, rightKey) {
+        if (myGameArea.keys[leftKey] && this.x > 0) {
+            this.x -= this.speed;
+        }
+        if (myGameArea.keys[rightKey] && this.x < canvas.width - this.width) {
+            this.x += this.speed;
+        }
+    };
 }
 
-// Área de juego y controles
+// ---------------------- BALAS ----------------------
+
+function Bullet(x, y, color) {
+    this.x = x;
+    this.y = y;
+    this.width = 5;
+    this.height = 10;
+    this.color = color;
+    this.speed = 4;
+
+    this.update = function () {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    };
+
+    this.newPos = function () {
+        this.y -= this.speed;
+    };
+}
+
+// Verificar colisiones entre balas y enemigos
+function checkBulletCollision(bullets, enemyW, enemyH) {
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        const bullet = bullets[i];
+
+        for (let j = 0; j < enemies.length; j++) {
+            const enemy = enemies[j];
+            if (!enemy.alive) continue;
+
+            const x = enemyX + enemy.col * (enemy.width + enemySpacing);
+            const y = enemyY + enemy.row * (enemy.height + enemySpacing);
+
+            if (
+                bullet.x < x + enemy.width &&
+                bullet.x + bullet.width > x &&
+                bullet.y < y + enemy.height &&
+                bullet.y + bullet.height > y
+            ) {
+                // Enemigo alcanzado
+                enemy.alive = false;
+                bullets.splice(i, 1);
+                break;
+            }
+        }
+    }
+}
+
+// ---------------------- ÁREA DE JUEGO ----------------------
+
 var myGameArea = {
     canvas: canvas,
     context: ctx,
@@ -156,73 +233,47 @@ var myGameArea = {
     }
 };
 
-// Definir los jugadores
-function component(width, height, color, x, y, PlayerImage) {
-    this.width = width;
-    this.height = height;
-    this.speed = 3;
-    this.x = x;
-    this.y = y;
-    this.image = PlayerImage;
-    this.update = function () {
-            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+// ---------------------- INICIAR JUEGO ----------------------
 
-    };
-
-    this.newPos = function (leftKey, rightKey) {
-        if (myGameArea.keys[leftKey] && this.x > 0) {
-            this.x -= this.speed;
-        }
-        if (myGameArea.keys[rightKey] && this.x < canvas.width - this.width) {
-            this.x += this.speed;
-        }
-    };
+function startGame() {
+    myGameArea.start();
+    createEnemies(); // Crear enemigos al inicio
+    player1 = new component(30, 30, "red", 10, canvas.height - 70, PlayerImage1);
+    player2 = new component(30, 30, "blue", 100, canvas.height - 70, PlayerImage2);
 }
 
-// Crear balas
-function Bullet(x, y, color) {
-    this.x = x;
-    this.y = y;
-    this.width = 5;
-    this.height = 10;
-    this.color = color;
-    this.speed = 4;
-    this.update = function () {
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-    };
+// ---------------------- BUCLE PRINCIPAL ----------------------
 
-    this.newPos = function () {
-        this.y -= this.speed;
-    };
-}
-
-// Función principal de actualización
 function updateGameArea() {
     myGameArea.clear();
     moveEnemies();
     drawEnemyGrid();
     gameFrame++;
 
-    // Movimiento de los jugadores
+    // Movimiento jugadores
     player1.newPos("ArrowLeft", "ArrowRight");
     player1.update();
 
     player2.newPos("a", "d");
     player2.update();
 
-    // Movimiento y actualización de balas
-    for (let i = 0; i < bulletsPlayer1.length; i++) {
+    // Actualizar y mostrar balas de Player 1
+    for (let i = bulletsPlayer1.length - 1; i >= 0; i--) {
         bulletsPlayer1[i].newPos();
         bulletsPlayer1[i].update();
     }
 
-    for (let i = 0; i < bulletsPlayer2.length; i++) {
+    // Actualizar y mostrar balas de Player 2
+    for (let i = bulletsPlayer2.length - 1; i >= 0; i--) {
         bulletsPlayer2[i].newPos();
         bulletsPlayer2[i].update();
     }
 
-    // Disparos de los jugadores
+    // Detectar colisiones después de mover
+    checkBulletCollision(bulletsPlayer1, spriteWidth, spriteHeight);
+    checkBulletCollision(bulletsPlayer2, spriteWidth, spriteHeight);
+
+    // Disparos con cooldown
     let currentTime = Date.now();
 
     if (myGameArea.keys["ArrowUp"] && currentTime - lastShotPlayer1 > shootCooldown) {
@@ -237,5 +288,3 @@ function updateGameArea() {
 
     requestAnimationFrame(updateGameArea);
 }
-
-
