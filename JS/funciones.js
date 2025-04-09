@@ -1,59 +1,91 @@
+// Iniciar el juego cuando cargue la página
+window.onload = function () {
+    startGame();
+};
+
+// Obtenemos el canvas por id y lo guardamos en una constante ya que esta no se moverá
 const canvas = document.getElementById('canvas');
+//Guardamos el contexto 2D en la variable constante ctx
 const ctx = canvas.getContext('2d');
 
-// Configuración del canvas en pantalla completa
+// Configuración del canvas con las medidas de pantalla completa
 const CANVAS_WIDTH = canvas.width = window.innerWidth;
 const CANVAS_HEIGHT = canvas.height = window.innerHeight;
 
 // ANIMACIONES DE ENEMIGOS
+/**
+ * 1.Generamos un objeto con el Image, posteriormente guardamos en el objeto la imagen del spritesheet
+ * 2.Creamos dos variables constantes de la medida del ancho y alto del sprite sheet
+ * 3.Ancho(width) = px totales de ancho / num de sprites por fila 
+ * 4.Alto(height) = px totales de alto / num de sprites por columna
+ */
+
+/*SQUID*/
 const squidImage = new Image();
 squidImage.src = "../Assets/Sprites_Enemigos/spritesheetSquid.png";
 const spriteWidth = 123;
 const spriteHeight = 102;
-
+/*CRAB*/
 const crabImage = new Image();
 crabImage.src = "../Assets/Sprites_Enemigos/spritesheetCrab.png";
 const crabWidth = 116.5;
 const crabHeight = 102;
-
+/*OCTOPUS*/
 const octopus = new Image();
 octopus.src = "../Assets/Sprites_Enemigos/spritesheetOctopus.png";
 const octopusWidth = 131;
 const octopusHeight = 102;
-
+/*UFO*/
 const UFO = new Image();
 UFO.src = "../Assets/Sprites_Enemigos/UFO.png";
 const UFOWidth = 188;
 const UFOHeight = 102;
 
-// Configuración de los enemigos
-const enemyColumns = 11;
-const enemyRows = 5;
+/*Sprites Players*/
+const PlayerImage1 = new Image();
+PlayerImage1.src="../Assets/Player1.png";
+const PlayerImage2 = new Image();
+PlayerImage2.src="../Assets/Player2.png";
+
+// Creacion de la cuadrícula con los 100 enemigos
+const enemyColumns = 8;
+const enemyRows = 10;
 const enemySpacing = 20;
+/*Donde empiezan los enemigos, 50x y 50y es la esquina superior izquierda pero con un poco de margen tanto arriba como a los lados*/
 let enemyX = 50;
-let enemyY = 50;
-let enemySpeed = 2;
+let enemyY = 80;
+//Velocidad de todos los enemigos
+let enemySpeed = 1;
+//1 de derecha a izquierda, -1 de izquierda a derecha
 let direction = 1;
+
 let gameFrame = 0;
+/*Se cambia la animacion cada 20 fotogramas*/
 const staggerFrames = 20;
+/*Sirve para poder alternar entre animaciones ya que es como un array la posicion del sprite, 0 es el primer sprite, 1 el siguiente, 
+luego si tuviesemos más columnas con el frameY podriamos escoger la columna, pero cada spritesheet solo tiene 1 columna, por eso no existe*/
 let frameX = 0;
 
-// Variables para el movimiento del UFO
+//Posicion en el canvas al iniciarse
 let ufoX = 0;
-let ufoY = 40; // Altura inicial del UFO
+let ufoY = 10; 
+//Velocidad del UFO
 let ufoSpeed = 3;
 let ufoDirection = 1;
 
 // Movimiento de enemigos
 function moveEnemies() {
+    //la posicion en X es la posicion Inicial del sprite+ la velocidad de los enemigos * direction que es 1 izquierda a derecha
     enemyX += enemySpeed * direction;
+
+    /*Esta confición hace que si la posición de más a la derecha es más grande que el ancho del canvas cambia la dirección de los enemigos*/
     if (enemyX + (enemyColumns * (spriteWidth + enemySpacing)) > CANVAS_WIDTH || enemyX < 0) {
         direction *= -1;
-        enemyY += 40;
     }
 
-    // Movimiento del UFO
+    //la posicion en X es la posicion Inicial del sprite+ la velocidad de los enemigos * direction que es 1 izquierda a derecha
     ufoX += ufoSpeed * ufoDirection;
+    /*Esta confición hace que si la suma del ancho del UFO más la posicion de la x del UFO es más grande que el canvas cambie la dirección*/
     if (ufoX + UFOWidth > CANVAS_WIDTH || ufoX < 0) {
         ufoDirection *= -1; // Cambia de dirección
     }
@@ -64,10 +96,12 @@ function moveEnemies() {
     }
 }
 
+
 // Dibujar los enemigos en la cuadrícula con animación
 function drawEnemyGrid() {
     for (let row = 0; row < enemyRows; row++) {
         for (let col = 0; col < enemyColumns; col++) {
+            
             let x = enemyX + col * (spriteWidth + enemySpacing);
             let y = enemyY + row * (spriteHeight + enemySpacing);
 
@@ -80,7 +114,6 @@ function drawEnemyGrid() {
             }
         }
     }
-
     // Dibujar UFO en su nueva posición
     ctx.drawImage(UFO, 0, 0, UFOWidth, UFOHeight, ufoX, ufoY, UFOWidth, UFOHeight);
 }
@@ -96,8 +129,8 @@ const shootCooldown = 500;
 // Inicializar el juego
 function startGame() {
     myGameArea.start();
-    player1 = new component(30, 30, "red", 10, canvas.height - 100);
-    player2 = new component(30, 30, "blue", 100, canvas.height - 100);
+    player1 = new component(30, 30, "red", 10, canvas.height - 70, PlayerImage1);
+    player2 = new component(30, 30, "blue", 100, canvas.height - 70, PlayerImage2);
 }
 
 // Área de juego y controles
@@ -124,16 +157,16 @@ var myGameArea = {
 };
 
 // Definir los jugadores
-function component(width, height, color, x, y) {
+function component(width, height, color, x, y, PlayerImage) {
     this.width = width;
     this.height = height;
     this.speed = 3;
     this.x = x;
     this.y = y;
-
+    this.image = PlayerImage;
     this.update = function () {
-        ctx.fillStyle = color;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+
     };
 
     this.newPos = function (leftKey, rightKey) {
@@ -154,7 +187,6 @@ function Bullet(x, y, color) {
     this.height = 10;
     this.color = color;
     this.speed = 4;
-
     this.update = function () {
         ctx.fillStyle = this.color;
         ctx.fillRect(this.x, this.y, this.width, this.height);
@@ -206,7 +238,4 @@ function updateGameArea() {
     requestAnimationFrame(updateGameArea);
 }
 
-// Iniciar el juego cuando cargue la página
-window.onload = function () {
-    startGame();
-};
+

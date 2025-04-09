@@ -3,18 +3,28 @@
     padding: 0;
 }
 
-.fondo{
-    background-color: black;
-}
-
 body{
     overflow: hidden;
 }
 
-.fondo{
-    background-color: black;
+
+@media (min-width: 320px){ /*movil*/
+    .fondo{
+        background-color: red;
+    }
 }
-body{
-    overflow: hidden;
+
+@media (min-width: 740px){ /*tablet*/
+    .fondo{
+        background-color: blue;
+    }
 }
+
+@media (min-width: 1024px){ /*desktop*/
+    .fondo{
+        background-color: black;
+    }
+}
+
+
 

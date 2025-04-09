@@ -1,7 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\HTML",
+    "\\JS"
   ],
-  "SelectedNode": "\\Movimiento_enemigos",
+  "SelectedNode": "\\JS\\funciones.js",
   "PreviewInSolutionExplorer": false
 }
