@@ -16,7 +16,7 @@ const CANVAS_HEIGHT = canvas.height = window.innerHeight;
 // Enemigos
 const squidImage = new Image();
 squidImage.src = "../Assets/Sprites_Enemigos/spritesheetSquid.png";
-const spriteWidth = 123;  // Tamaño original
+const spriteWidth = 100;  // Tamaño original
 const spriteHeight = 102; // Tamaño original
 
 const crabImage = new Image();
@@ -42,7 +42,7 @@ PlayerImage2.src = "../Assets/Player2.png";
 
 // ---------------------- VARIABLES GLOBALES ----------------------
 
-const enemyColumns = 8;
+const enemyColumns = 10;
 const enemyRows = 10;
 const enemySpacing = 20;
 let enemyX = 50;
@@ -65,6 +65,11 @@ let bulletsPlayer2 = [];
 let lastShotPlayer1 = 0;
 let lastShotPlayer2 = 0;
 const shootCooldown = 500;
+
+let lastEnemyShotTime = 0;
+const enemyShootCooldown = 1000; // 1 segundos
+let enemyBullets = []; // Para almacenar los disparos de los enemigos
+const maxEnemyShots = 3; // Número máximo de disparos de enemigos a la vez
 
 // Enemigos vivos
 let enemies = [];
@@ -101,18 +106,19 @@ function createEnemies() {
     }
 }
 
-// Movimiento de enemigos y UFO
+// Movimiento de enemigos base
 function moveEnemies() {
     enemyX += enemySpeed * direction;
-    if (enemyX + (enemyColumns * (spriteWidth + enemySpacing)) > CANVAS_WIDTH || enemyX < 0) {
-        direction *= -1;
+    if (enemyX + (enemyColumns - 4) * (spriteWidth + enemySpacing) + spriteWidth > CANVAS_WIDTH || enemyX < 0) {
+        direction *= -1;  
     }
-
+    
+    //movimiento UFO
     ufoX += ufoSpeed * ufoDirection;
     if (ufoX + UFOWidth > CANVAS_WIDTH || ufoX < 0) {
         ufoDirection *= -1;
     }
-
+    //ANIMACION 
     if (gameFrame % staggerFrames === 0) {
         frameX = (frameX + 1) % 2;
     }
@@ -137,6 +143,29 @@ function drawEnemyGrid() {
 
     ctx.drawImage(UFO, 0, 0, UFOWidth, UFOHeight, ufoX, ufoY, UFOWidth, UFOHeight);
 }
+
+// Asignar un disparo aleatorio a un enemigo
+function enemyShoot() {
+    const currentTime = Date.now();
+    if (currentTime - lastEnemyShotTime > enemyShootCooldown) {
+        // Elegir un número aleatorio de disparos activos (máximo 3)
+        const activeShots = enemyBullets.filter(bullet => bullet.alive).length;
+        
+        if (activeShots < maxEnemyShots) {
+            // Elegir un enemigo aleatorio que aún esté vivo
+            const aliveEnemies = enemies.filter(enemy => enemy.alive);
+            if (aliveEnemies.length > 0) {
+                const randomEnemy = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+                const enemyXPos = enemyX + randomEnemy.col * (randomEnemy.width + enemySpacing);
+                const enemyYPos = enemyY + randomEnemy.row * (randomEnemy.height + enemySpacing);
+                // Crear un disparo desde la posición del enemigo (hacia abajo)
+                enemyBullets.push(new EnemyBullet(enemyXPos + randomEnemy.width / 2 - 2, enemyYPos + randomEnemy.height));
+            }
+        }
+        lastEnemyShotTime = currentTime;
+    }
+}
+
 
 // ---------------------- JUGADORES ----------------------
 
@@ -181,6 +210,32 @@ function Bullet(x, y, color) {
         this.y -= this.speed;
     };
 }
+
+// Modificar la clase Bullet para que las balas de los enemigos se muevan hacia abajo
+class EnemyBullet {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 5;
+        this.height = 10;
+        this.color = "white"; // Color de las balas de los enemigos
+        this.speed = 4;
+        this.alive = true; // Para determinar si la bala está activa
+    }
+
+    update() {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+
+    newPos() {
+        this.y += this.speed; // Mover la bala hacia abajo
+        if (this.y > CANVAS_HEIGHT) {
+            this.alive = false; // La bala deja de estar activa cuando sale de la pantalla
+        }
+    }
+}
+
 
 // Verificar colisiones entre balas y enemigos
 function checkBulletCollision(bullets, enemyW, enemyH) {
@@ -244,11 +299,15 @@ function startGame() {
 
 // ---------------------- BUCLE PRINCIPAL ----------------------
 
+// Modificar el bucle principal para incluir el disparo de enemigos
 function updateGameArea() {
     myGameArea.clear();
     moveEnemies();
     drawEnemyGrid();
     gameFrame++;
+
+    // Disparo aleatorio de enemigos
+    enemyShoot(); // Llamamos a la función de disparo de enemigos
 
     // Movimiento jugadores
     player1.newPos("ArrowLeft", "ArrowRight");
@@ -269,9 +328,17 @@ function updateGameArea() {
         bulletsPlayer2[i].update();
     }
 
+    // Actualizar y mostrar balas de enemigos
+    for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        enemyBullets[i].newPos();
+        enemyBullets[i].update();
+    }
+
     // Detectar colisiones después de mover
     checkBulletCollision(bulletsPlayer1, spriteWidth, spriteHeight);
     checkBulletCollision(bulletsPlayer2, spriteWidth, spriteHeight);
+
+    // Detectar colisiones entre las balas de los enemigos y los jugadores (Aquí puedes añadir esa lógica de colisión)
 
     // Disparos con cooldown
     let currentTime = Date.now();
