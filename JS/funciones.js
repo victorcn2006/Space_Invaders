@@ -74,6 +74,10 @@ const maxEnemyShots = 3; // Número máximo de disparos de enemigos a la vez
 // Enemigos vivos
 let enemies = [];
 
+/*PUNTOS JUGADORES*/
+let scorePlayer1 = 0;
+let scorePlayer2 = 0;
+
 // ---------------------- FUNCIONES DE ENEMIGOS ----------------------
 
 // Inicializar enemigos en una matriz
@@ -113,12 +117,12 @@ function moveEnemies() {
         direction *= -1;  
     }
     
-    //movimiento UFO
+    // Movimiento UFO
     ufoX += ufoSpeed * ufoDirection;
     if (ufoX + UFOWidth > CANVAS_WIDTH || ufoX < 0) {
         ufoDirection *= -1;
     }
-    //ANIMACION 
+    // ANIMACION 
     if (gameFrame % staggerFrames === 0) {
         frameX = (frameX + 1) % 2;
     }
@@ -165,7 +169,6 @@ function enemyShoot() {
         lastEnemyShotTime = currentTime;
     }
 }
-
 
 // ---------------------- JUGADORES ----------------------
 
@@ -236,12 +239,12 @@ class EnemyBullet {
     }
 }
 
-
-// Verificar colisiones entre balas y enemigos
-function checkBulletCollision(bullets, enemyW, enemyH) {
+// Detectar colisiones y sumar puntos
+function checkBulletCollision(bullets, playerNumber) {
     for (let i = bullets.length - 1; i >= 0; i--) {
         const bullet = bullets[i];
 
+        // Colisión con enemigos
         for (let j = 0; j < enemies.length; j++) {
             const enemy = enemies[j];
             if (!enemy.alive) continue;
@@ -255,13 +258,43 @@ function checkBulletCollision(bullets, enemyW, enemyH) {
                 bullet.y < y + enemy.height &&
                 bullet.y + bullet.height > y
             ) {
-                // Enemigo alcanzado
                 enemy.alive = false;
                 bullets.splice(i, 1);
+
+                if (playerNumber == 1) scorePlayer1 += 5;
+                else if (playerNumber == 2) scorePlayer2 += 5;
+
                 break;
             }
         }
+
+        // Colisión con el UFO
+        if (
+            bullet.x < ufoX + UFOWidth &&
+            bullet.x + bullet.width > ufoX &&
+            bullet.y < ufoY + UFOHeight &&
+            bullet.y + bullet.height > ufoY
+        ) {
+            // Destruir UFO
+            ufoX = -UFOWidth; // Mover el UFO fuera de la pantalla
+            ufoY = -UFOHeight; // Mover el UFO fuera de la pantalla
+
+            // Incrementar puntos
+            if (playerNumber == 1) scorePlayer1 += 20;
+            else if (playerNumber == 2) scorePlayer2 += 20;
+
+            // Eliminar la bala
+            bullets.splice(i, 1);
+        }
     }
+}
+
+// Dibujar puntuaciones
+function drawScores() {
+    ctx.fillStyle = "white";
+    ctx.font = "20px Arial";
+    ctx.fillText("Jugador 1: " + scorePlayer1, 20, 30);
+    ctx.fillText("Jugador 2: " + scorePlayer2, CANVAS_WIDTH - 160, 30);
 }
 
 // ---------------------- ÁREA DE JUEGO ----------------------
@@ -335,10 +368,8 @@ function updateGameArea() {
     }
 
     // Detectar colisiones después de mover
-    checkBulletCollision(bulletsPlayer1, spriteWidth, spriteHeight);
-    checkBulletCollision(bulletsPlayer2, spriteWidth, spriteHeight);
-
-    // Detectar colisiones entre las balas de los enemigos y los jugadores (Aquí puedes añadir esa lógica de colisión)
+    checkBulletCollision(bulletsPlayer1, 1);  // Jugador 1
+    checkBulletCollision(bulletsPlayer2, 2);  // Jugador 2
 
     // Disparos con cooldown
     let currentTime = Date.now();
@@ -352,6 +383,6 @@ function updateGameArea() {
         bulletsPlayer2.push(new Bullet(player2.x + player2.width / 2 - 2, player2.y, "green"));
         lastShotPlayer2 = currentTime;
     }
-
+    drawScores();
     requestAnimationFrame(updateGameArea);
 }
