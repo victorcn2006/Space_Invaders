@@ -67,7 +67,7 @@ let lastShotPlayer2 = 0;
 const shootCooldown = 500;
 
 let lastEnemyShotTime = 0;
-const enemyShootCooldown = 1000; // 1 segundos
+const enemyShootCooldown = 1000; // 1 segundo
 let enemyBullets = []; // Para almacenar los disparos de los enemigos
 const maxEnemyShots = 3; // Número máximo de disparos de enemigos a la vez
 
