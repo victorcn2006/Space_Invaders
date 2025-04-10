@@ -183,6 +183,7 @@ function checkBulletCollision(bullets, playerNumber) {
     for (let i = bullets.length - 1; i >= 0; i--) {
         const bullet = bullets[i];
 
+        // Colisión con enemigos
         for (let j = 0; j < enemies.length; j++) {
             const enemy = enemies[j];
             if (!enemy.alive) continue;
@@ -204,6 +205,25 @@ function checkBulletCollision(bullets, playerNumber) {
 
                 break;
             }
+        }
+
+        // Colisión con el UFO
+        if (
+            bullet.x < ufoX + UFOWidth &&
+            bullet.x + bullet.width > ufoX &&
+            bullet.y < ufoY + UFOHeight &&
+            bullet.y + bullet.height > ufoY
+        ) {
+            // Destruir UFO
+            ufoX = -UFOWidth; // Mover el UFO fuera de la pantalla
+            ufoY = -UFOHeight; // Mover el UFO fuera de la pantalla
+
+            // Incrementar puntos
+            if (playerNumber === 1) scorePlayer1 += 20;
+            else if (playerNumber === 2) scorePlayer2 += 20;
+
+            // Eliminar la bala
+            bullets.splice(i, 1);
         }
     }
 }
