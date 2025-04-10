@@ -334,9 +334,11 @@ function drawScores() {
 
 // ---------------------- CONDICIONES DE VICTORIA ----------------------
 
+//Funcion para controlar las vidas de los jugadores
 function checkPlayerLives(){
     let gameOver = livePlayer1 <= 0 || livePlayer2 <= 0;
     
+    //Un if para que cuando uno de los 2 jugadores pierda se muestre por pantalla GAME OVER
     if (gameOver){
         ctx.fillStyle = "red";
         ctx.font = "60px Arial";
@@ -345,6 +347,7 @@ function checkPlayerLives(){
         ctx.font = "30px Arial";
         let message = "";
 
+        //If para mostrar que jugador a ganado y cual a perdido
         if (livePlayer1 <= 0) {
             message = "Ganador: Jugador 2";
         } 
@@ -353,17 +356,39 @@ function checkPlayerLives(){
             message = "Ganador: Jugador 1";
         }
 
-        ctx.fillText(message, CANVAS_WIDTH / 2 - 120, CANVAS_HEIGHT / 2 + 50);
+        ctx.fillText(message, CANVAS_WIDTH / 2 - 120, CANVAS_HEIGHT / 2 + 50); //Mensaje final
     }
 
     return gameOver;
 
 }
 
+//Funcion para controlar la puntuación de los jugadores
+function checkPlayerScore(){
+    //Generamos 2 variables para el mensaje y una de control para que el juego acabe
+    let message = "";
+    let gameEnd = false;
+
+    //
+    if(scorePlayer1 >= 200){
+        message = "Jugador 1 gana la partida!";
+        gameEnd = true;
+    } 
+
+    if(scorePlayer2 >= 200){
+        message = "Jugador 2 gana la partida!";
+        gameEnd = true;
+    }
+
+    if (gameEnd) {
+        ctx.fillStyle = "red";
+        ctx.font = "30px Arial";
+        ctx.fillText(message, CANVAS_WIDTH / 2 - 150, CANVAS_HEIGHT / 2 + 100);
+    }
 
 
-
-
+    return gameEnd;
+}
 
 // ---------------------- ÁREA DE JUEGO ----------------------
 
@@ -453,6 +478,13 @@ function updateGameArea() {
         bulletsPlayer2.push(new Bullet(player2.x + player2.width / 2 - 2, player2.y, "green"));
         lastShotPlayer2 = currentTime;
     }
+    
     drawScores();
+    checkPlayerScore();
+
+    if (checkPlayerLives() || checkPlayerScore()) {
+        return; 
+    }
+
     requestAnimationFrame(updateGameArea);
 }
