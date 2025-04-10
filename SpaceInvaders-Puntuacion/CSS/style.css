@@ -1,0 +1,30 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+
+body{
+    overflow: hidden;
+}
+
+
+@media (min-width: 320px){ /*movil*/
+    .fondo{
+        background-color: red;
+    }
+}
+
+@media (min-width: 740px){ /*tablet*/
+    .fondo{
+        background-color: blue;
+    }
+}
+
+@media (min-width: 1024px){ /*desktop*/
+    .fondo{
+        background-color: black;
+    }
+}
+
+
+
