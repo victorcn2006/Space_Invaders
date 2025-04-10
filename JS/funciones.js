@@ -78,6 +78,10 @@ let enemies = [];
 let scorePlayer1 = 0;
 let scorePlayer2 = 0;
 
+//variable vidas jugadores
+let livePlayer1 = 3;
+let livePlayer2 = 3;
+
 // ---------------------- FUNCIONES DE ENEMIGOS ----------------------
 
 // Inicializar enemigos en una matriz
@@ -162,7 +166,7 @@ function enemyShoot() {
                 const randomEnemy = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
                 const enemyXPos = enemyX + randomEnemy.col * (randomEnemy.width + enemySpacing);
                 const enemyYPos = enemyY + randomEnemy.row * (randomEnemy.height + enemySpacing);
-                // Crear un disparo desde la posición del enemigo (hacia abajo)
+                // Crear un disparo desde la posición del enemigo 
                 enemyBullets.push(new EnemyBullet(enemyXPos + randomEnemy.width / 2 - 2, enemyYPos + randomEnemy.height));
             }
         }
@@ -214,14 +218,14 @@ function Bullet(x, y, color) {
     };
 }
 
-// Modificar la clase Bullet para que las balas de los enemigos se muevan hacia abajo
+// Modificar la clase Bullet para que las balas de los enemigos
 class EnemyBullet {
     constructor(x, y) {
         this.x = x;
         this.y = y;
         this.width = 5;
         this.height = 10;
-        this.color = "white"; // Color de las balas de los enemigos
+        this.color = "white"; // Color
         this.speed = 4;
         this.alive = true; // Para determinar si la bala está activa
     }
@@ -232,7 +236,7 @@ class EnemyBullet {
     }
 
     newPos() {
-        this.y += this.speed; // Mover la bala hacia abajo
+        this.y += this.speed; 
         if (this.y > CANVAS_HEIGHT) {
             this.alive = false; // La bala deja de estar activa cuando sale de la pantalla
         }
@@ -276,8 +280,8 @@ function checkBulletCollision(bullets, playerNumber) {
             bullet.y + bullet.height > ufoY
         ) {
             // Destruir UFO
-            ufoX = -UFOWidth; // Mover el UFO fuera de la pantalla
-            ufoY = -UFOHeight; // Mover el UFO fuera de la pantalla
+            ufoX = -UFOWidth; 
+            ufoY = -UFOHeight; 
 
             // Incrementar puntos
             if (playerNumber == 1) scorePlayer1 += 20;
@@ -289,13 +293,77 @@ function checkBulletCollision(bullets, playerNumber) {
     }
 }
 
+function checkPlayerCollision() {
+    for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const bullet = enemyBullets[i];
+
+        // Comprobamos la colisión con el jugador 1 
+        if (
+            bullet.x < player1.x + player1.width &&
+            bullet.x + bullet.width > player1.x &&
+            bullet.y < player1.y + player1.height &&
+            bullet.y + bullet.height > player1.y
+        ) {
+            livePlayer1--;
+            enemyBullets.splice(i,1);
+            continue;
+        }
+        
+        // Comprobamos la colisión con el jugador 2 
+        if (
+            bullet.x < player2.x + player2.width &&
+            bullet.x + bullet.width > player2.x &&
+            bullet.y < player2.y + player2.height &&
+            bullet.y + bullet.height > player2.y
+        ) {
+            livePlayer2--;
+            enemyBullets.splice(i,1);
+            continue;
+        }
+    }
+}
+
 // Dibujar puntuaciones
 function drawScores() {
     ctx.fillStyle = "white";
     ctx.font = "20px Arial";
-    ctx.fillText("Jugador 1: " + scorePlayer1, 20, 30);
-    ctx.fillText("Jugador 2: " + scorePlayer2, CANVAS_WIDTH - 160, 30);
+    ctx.fillText("Jugador 1: " + scorePlayer1 + " | Vidas: " + livePlayer1, 20, 30);
+    ctx.fillText("Jugador 2: " + scorePlayer2 + " | Vidas: " + livePlayer2, CANVAS_WIDTH - 260, 30);
+
 }
+
+// ---------------------- CONDICIONES DE VICTORIA ----------------------
+
+function checkPlayerLives(){
+    let gameOver = livePlayer1 <= 0 || livePlayer2 <= 0;
+    
+    if (gameOver){
+        ctx.fillStyle = "red";
+        ctx.font = "60px Arial";
+        ctx.fillText("GAME OVER", CANVAS_WIDTH / 2 - 180, CANVAS_HEIGHT / 2);
+
+        ctx.font = "30px Arial";
+        let message = "";
+
+        if (livePlayer1 <= 0) {
+            message = "Ganador: Jugador 2";
+        } 
+        
+        if (livePlayer2 <= 0) {
+            message = "Ganador: Jugador 1";
+        }
+
+        ctx.fillText(message, CANVAS_WIDTH / 2 - 120, CANVAS_HEIGHT / 2 + 50);
+    }
+
+    return gameOver;
+
+}
+
+
+
+
+
 
 // ---------------------- ÁREA DE JUEGO ----------------------
 
@@ -332,7 +400,7 @@ function startGame() {
 
 // ---------------------- BUCLE PRINCIPAL ----------------------
 
-// Modificar el bucle principal para incluir el disparo de enemigos
+// bucle principal 
 function updateGameArea() {
     myGameArea.clear();
     moveEnemies();
@@ -340,7 +408,7 @@ function updateGameArea() {
     gameFrame++;
 
     // Disparo aleatorio de enemigos
-    enemyShoot(); // Llamamos a la función de disparo de enemigos
+    enemyShoot(); 
 
     // Movimiento jugadores
     player1.newPos("ArrowLeft", "ArrowRight");
@@ -370,6 +438,8 @@ function updateGameArea() {
     // Detectar colisiones después de mover
     checkBulletCollision(bulletsPlayer1, 1);  // Jugador 1
     checkBulletCollision(bulletsPlayer2, 2);  // Jugador 2
+
+    checkPlayerCollision();
 
     // Disparos con cooldown
     let currentTime = Date.now();
