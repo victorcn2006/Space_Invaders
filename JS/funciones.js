@@ -351,6 +351,8 @@ function drawScores() {
             ctx.drawImage(corazonVacio, x, y, 25, 25);
         }
     }
+    ctx.fillText("Jugador 1: " + scorePlayer1 + " | Vidas: " + livePlayer1, 20, 30);
+    ctx.fillText("Jugador 2: " + scorePlayer2 + " | Vidas: " + livePlayer2, CANVAS_WIDTH - 260, 30);
 }
 
 // ---------------------- CONDICIONES DE VICTORIA ----------------------
