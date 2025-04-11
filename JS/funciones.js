@@ -40,6 +40,12 @@ PlayerImage1.src = "../Assets/Player1.png";
 const PlayerImage2 = new Image();
 PlayerImage2.src = "../Assets/Player2.png";
 
+
+//HEARTS 
+const heartFull = new Image();
+heartFull.src = "../Assets/SpritesVida/heart.png"
+const corazonVacio = new Image();
+corazonVacio.src = "../Assets/SpritesVida/border.png";
 // ---------------------- VARIABLES GLOBALES ----------------------
 
 const enemyColumns = 10;
@@ -327,9 +333,24 @@ function checkPlayerCollision() {
 function drawScores() {
     ctx.fillStyle = "white";
     ctx.font = "20px Arial";
-    ctx.fillText("Jugador 1: " + scorePlayer1 + " | Vidas: " + livePlayer1, 20, 30);
-    ctx.fillText("Jugador 2: " + scorePlayer2 + " | Vidas: " + livePlayer2, CANVAS_WIDTH - 260, 30);
-
+    for (let i = 0; i < 3; i++) {
+        let x = 20 + i * 30;  // Separación horizontal
+        let y = 40;           // Justo debajo del texto
+        if (i < livePlayer1) {
+            ctx.drawImage(heartFull, x, y, 25, 25);
+        } else {
+            ctx.drawImage(corazonVacio, x, y, 25, 25);
+        }
+    }
+    for (let i = 0; i < 3; i++) {
+        let x = CANVAS_WIDTH - 260 + i * 30;  // alineado con el texto
+        let y = 40;
+        if (i < livePlayer2) {
+            ctx.drawImage(heartFull, x, y, 25, 25);
+        } else {
+            ctx.drawImage(corazonVacio, x, y, 25, 25);
+        }
+    }
 }
 
 // ---------------------- CONDICIONES DE VICTORIA ----------------------

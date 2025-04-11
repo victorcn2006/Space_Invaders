@@ -35,3 +35,4 @@ yarn-error.log*
 # Archivos de compilación de CSS (si usas preprocesadores como Sass o Less)
 .sass-cache/
 .cache/
+.vs/
